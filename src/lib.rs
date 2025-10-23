@@ -1,14 +1,22 @@
 //! The BFC library.
 
-pub mod interpreter;
-pub mod parser;
+#![no_std]
+
+extern crate alloc;
+
+pub mod ir;
+pub mod vm;
+
+pub use ir::IR;
+pub use vm::{VM, VMOptions};
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        interpreter::{Interpreter, InterpreterOptions},
-        parser,
-    };
+    use core::str::FromStr;
+
+    use alloc::{string::String, vec::Vec};
+
+    use crate::{IR, VM, VMOptions};
 
     #[test]
     fn test_hello_world() {
@@ -26,17 +34,17 @@ mod tests {
 --------.
 >>>++++[<++++++++>-]<+.";
 
-        let ast = parser::parse(program).unwrap();
+        let ir = IR::from_str(program).unwrap();
         let mut buffer = Vec::new();
-        let options = InterpreterOptions {
+        let options = VMOptions {
             memory_buffer_size: 30_000,
             out_fn: &mut |ch| {
                 buffer.push(ch);
             },
             in_fn: &mut || unreachable!(),
         };
-        let mut interpreter = Interpreter::from_ast(ast, options);
-        interpreter.run();
+        let mut vm = VM::from_ir(ir, options);
+        vm.run();
         let output = String::from_utf8(buffer).unwrap();
         assert_eq!(output, "Hello, World!");
     }

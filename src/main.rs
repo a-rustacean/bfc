@@ -2,12 +2,10 @@
 use std::{
     env, fs,
     io::{self, Read, Write},
+    str::FromStr,
 };
 
-use bfc::{
-    interpreter::{Interpreter, InterpreterOptions},
-    parser,
-};
+use bfc::{IR, VM, VMOptions};
 
 fn main() -> io::Result<()> {
     // Parse command-line arguments to get the file path.
@@ -25,12 +23,12 @@ fn main() -> io::Result<()> {
     // Read the Brainfuck source code from the file.
     let source = fs::read_to_string(file_path)?;
 
-    // Define the output function for the interpreter.
+    // Define the output function for the VM.
     fn putchar(ch: u8) {
         print!("{}", ch as char);
     }
 
-    // Define the input function for the interpreter.
+    // Define the input function for the VM.
     fn getchar() -> u8 {
         io::stdout().flush().unwrap();
         let mut buffer = [0; 1]; // Read one byte from stdin.
@@ -38,21 +36,21 @@ fn main() -> io::Result<()> {
         buffer[0]
     }
 
-    // Parse the source code into an AST.
-    let ast = parser::parse(&source).unwrap();
+    // Parse the source code into an IR.
+    let ir = IR::from_str(&source).unwrap();
 
-    // Set up the interpreter options.
-    let options = InterpreterOptions {
+    // Set up the VM options.
+    let options = VMOptions {
         memory_buffer_size: 30_000, // Standard Brainfuck memory size.
         out_fn: &mut putchar,
         in_fn: &mut getchar,
     };
 
-    // Create a new interpreter from the AST and options.
-    let mut interpreter = Interpreter::from_ast(ast, options);
+    // Create a new VM from the IR and options.
+    let mut vm = VM::from_ir(ir, options);
 
-    // Run the interpreter.
-    interpreter.run();
+    // Run the VM.
+    vm.run();
 
     Ok(())
 }
